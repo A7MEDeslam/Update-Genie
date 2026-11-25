@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aslak Expert — Factory Lines Preview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --brand-primary: #2864dc;
+      --brand-soft: #eaf1ff;
+      --text-primary: #172b4d;
+      --text-secondary: #71809a;
+      --text-muted: #9aa6b8;
+      --surface: #ffffff;
+      --canvas: #f4f7fb;
+      --border: #e5ebf3;
+      --success: #14a86b;
+      --success-soft: #e9f8f0;
+      --danger: #e75364;
+      --danger-soft: #fff0f2;
+      --warning: #e9a12a;
+      --warning-soft: #fff7e8;
+      --shadow: 0 2px 8px rgba(24, 48, 82, .055);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text-primary); background: var(--canvas); font-size: 12px; }
+    button { font: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 182px minmax(0,1fr); }
+    .nav { background: #fff; border-right: 1px solid var(--border); min-height: 100vh; display: flex; flex-direction: column; }
+    .logo { height: 70px; display:flex; align-items:center; padding: 0 24px; border-bottom:1px solid #f1f3f7; font-size:17px; font-weight:800; letter-spacing:.065em; color:#15243b; }
+    .nav-body { padding: 14px 10px; display:grid; gap:4px; }
+    .nav-item { display:flex; align-items:center; gap:9px; height:32px; padding:0 10px; border-radius:7px; color:#4c5a70; font-size:11px; }
+    .nav-item.active { color:var(--brand-primary); background:var(--brand-soft); font-weight:650; }
+    .nav-item.section { color:#8a97aa; padding: 14px 8px 4px; height:auto; }
+    .nav-item.sub { margin-left:18px; color:#66768c; }
+    .nav-icon { width:13px; height:13px; display:grid; place-items:center; color:currentColor; font-size:12px; }
+    .nav-bottom { margin-top:auto; padding:12px 12px 22px; color:#46566d; border-top:1px solid #f1f3f7; }
+    .profile { margin-top:12px; padding:10px; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; gap:8px; font-size:10px; }
+    .avatar { width:25px; height:25px; border-radius:50%; display:grid; place-items:center; background:#dfe9ff; color:#315bc5; font-size:10px; font-weight:700; }
+    .main { min-width:0; }
+    .topbar { height:66px; background:#fff; border-bottom:1px solid var(--border); padding:0 22px; display:flex; justify-content:space-between; align-items:center; }
+    .crumbs { color:#8a97a8; font-size:11px; }
+    .toolbar { display:flex; align-items:center; gap:13px; color:#53647c; font-size:10px; }
+    .live { color:var(--success); font-weight:650; }
+    .pill { padding:4px 8px; border:1px solid #dbe5f4; border-radius:999px; background:#f9fbff; color:#53647c; }
+    .filterbar { height:42px; padding:0 22px; background:#fff; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--border); }
+    .filter { border:1px solid #e6ebf2; color:#697991; padding:5px 9px; border-radius:6px; background:#fbfcfe; font-size:10px; }
+    .content { padding:18px 22px 30px; }
+    .heading { display:flex; justify-content:space-between; align-items:start; margin-bottom:13px; }
+    h1 { margin:0; font-size:18px; letter-spacing:-.025em; color:var(--text-primary); }
+    .subtitle { margin-top:4px; color:var(--text-secondary); font-size:10px; }
+    .shift { border:1px solid var(--border); background:#fff; color:#51627b; padding:7px 10px; border-radius:7px; font-size:10px; }
+    .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:17px; }
+    .kpi { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px 14px; box-shadow:var(--shadow); min-height:65px; }
+    .kpi-label { text-transform:uppercase; font-size:8px; letter-spacing:.075em; color:#8290a5; font-weight:700; }
+    .kpi-value { margin-top:4px; font-size:17px; line-height:1; font-weight:750; color:var(--text-primary); }
+    .kpi-note { margin-top:4px; font-size:9px; color:var(--text-secondary); }
+    .dashboard-grid { display:grid; grid-template-columns:minmax(0,1fr) 198px; gap:12px; align-items:start; }
+    .section-heading { display:flex; align-items:center; justify-content:space-between; margin:0 0 9px; }
+    h2 { margin:0; font-size:13px; font-weight:700; }
+    .legend { display:flex; align-items:center; gap:11px; font-size:9px; color:var(--text-secondary); }
+    .legend span { display:flex; gap:4px; align-items:center; }
+    .dot { width:6px; height:6px; border-radius:50%; display:inline-block; background:var(--success); }
+    .dot.stopped { background:var(--danger); }
+    .dot.idle { background:var(--warning); }
+    .line-list { display:grid; gap:9px; }
+    .line-card { min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); padding:10px 11px 9px; cursor:pointer; }
+    .line-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .line-title { display:flex; align-items:baseline; gap:8px; }
+    .line-title strong { font-size:11px; }
+    .line-title span { color:var(--text-secondary); font-size:9px; }
+    .line-state { border-radius:999px; padding:4px 8px; background:var(--success-soft); color:#168859; font-size:8px; font-weight:750; letter-spacing:.035em; }
+    .line-state.mixed { background:var(--warning-soft); color:#a96a08; }
+    .flow { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:7px; }
+    .port { height:42px; display:grid; place-items:center; border:1px solid #cfe6fb; background:#f0f8ff; border-radius:8px; color:#4b83ad; font-size:8px; font-weight:750; letter-spacing:.04em; position:relative; }
+    .port.out { border-color:#cceedd; background:#effaf4; color:#23905f; }
+    .motor-track { min-width:0; display:grid; grid-template-columns:repeat(9,minmax(0,1fr)); gap:4px; position:relative; }
+    .motor-track::before { content:""; position:absolute; top:19px; left:2%; right:2%; height:2px; background:#c9d5e5; z-index:0; }
+    .motor { min-width:0; text-align:center; position:relative; z-index:1; display:grid; justify-items:center; grid-template-rows:31px 11px 12px; gap:1px; border:0; padding:0; background:transparent; font:inherit; cursor:pointer; }
+    .motor:hover .motor-icon { box-shadow:0 0 0 3px var(--brand-soft); transform:translateY(-1px); }
+    .motor:focus-visible { outline:2px solid var(--brand-primary); outline-offset:3px; border-radius:7px; }
+    .motor-icon { width:31px; height:27px; display:grid; place-items:center; background:#fff; border:1px solid #dfe7f1; border-radius:6px; color:#607690; }
+    .motor.running .motor-icon { border-color:#a7dec2; color:#189767; background:#fbfffc; }
+    .motor.stopped .motor-icon { border-color:#f0bcc2; color:#d94f5d; background:#fffafa; }
+    .motor-name { font-size:7px; font-weight:700; color:#53647a; white-space:nowrap; }
+    .motor-state { font-size:7px; font-weight:700; color:#179463; white-space:nowrap; }
+    .motor.stopped .motor-state { color:#d64d5b; }
+    .motor-power { grid-column:1/-1; text-align:center; margin-top:3px; color:var(--text-muted); font-size:8px; font-weight:500; }
+    .line-foot { display:flex; justify-content:space-between; margin-top:7px; font-size:8px; color:var(--text-secondary); }
+    .link-button { color:var(--brand-primary); text-decoration:none; font-weight:650; }
+    button.link-button { border:0; padding:0; background:transparent; font:inherit; cursor:pointer; }
+    .rail { display:grid; gap:10px; padding-top:21px; }
+    .rail-card { background:#fff; border:1px solid var(--border); border-radius:9px; box-shadow:var(--shadow); overflow:hidden; }
+    .rail-head { padding:10px 11px; border-bottom:1px solid #edf1f6; display:flex; justify-content:space-between; align-items:center; }
+    .rail-head strong { font-size:10px; }
+    .rail-head a { color:var(--brand-primary); font-size:8px; text-decoration:none; font-weight:650; }
+    .sku { padding:9px 11px; border-bottom:1px solid #f0f3f7; }
+    .sku:last-child { border-bottom:0; }
+    .sku-top { display:flex; justify-content:space-between; font-size:8px; color:#52637a; font-weight:700; }
+    .sku-status { color:#169366; text-transform:uppercase; font-size:7px; }
+    .sku-code { margin-top:4px; font-size:8px; color:var(--text-primary); font-weight:700; }
+    .sku-note { margin-top:3px; color:var(--text-secondary); font-size:7px; }
+    .alarm { padding:9px 11px; border-bottom:1px solid #f0f3f7; }
+    .alarm:last-child { border-bottom:0; }
+    .alarm-title { display:flex; align-items:center; gap:5px; font-size:8px; font-weight:700; }
+    .alarm-time { color:var(--text-muted); font-size:7px; }
+    .alarm-note { margin:4px 0 0 11px; font-size:7px; color:var(--text-secondary); }
+    .status-mark { width:6px; height:6px; border-radius:50%; background:var(--danger); }
+    .status-mark.warn { background:var(--warning); }
+    .note { margin-top:9px; color:#8794a7; font-size:9px; }
+    .modal-backdrop { position:fixed; inset:0; z-index:10; background:rgba(26,39,57,.54); display:none; align-items:center; justify-content:center; padding:22px; }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(900px,100%); max-height:min(820px,calc(100vh - 44px)); overflow:auto; background:#fff; border:1px solid #e4eaf2; border-radius:12px; box-shadow:0 18px 50px rgba(19,35,56,.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:17px 20px; border-bottom:1px solid var(--border); }
+    .modal-title { font-size:17px; font-weight:750; letter-spacing:-.02em; }
+    .modal-subtitle { margin-top:4px; color:var(--text-secondary); font-size:10px; }
+    .close-button { border:1px solid var(--border); background:#fff; color:#52637a; border-radius:7px; padding:7px 11px; cursor:pointer; }
+    .close-button:hover { background:#f7f9fc; }
+    .modal-body { padding:16px 20px 18px; }
+    .motor-summary { display:flex; align-items:center; gap:14px; padding:13px 14px; border:1px solid #d8e7fb; background:#f1f7ff; border-radius:9px; }
+    .summary-icon { width:38px; height:38px; display:grid; place-items:center; border-radius:8px; background:#fff; border:1px solid #dce7f4; color:var(--brand-primary); }
+    .summary-details { min-width:0; }
+    .eyebrow { font-size:8px; color:#71839a; font-weight:750; letter-spacing:.07em; text-transform:uppercase; }
+    .summary-name { margin-top:3px; font-size:12px; font-weight:750; }
+    .summary-context { margin-top:3px; font-size:9px; color:var(--text-secondary); }
+    .summary-metrics { margin-left:auto; display:flex; align-items:center; gap:22px; }
+    .summary-metric label { display:block; color:#71839a; font-size:8px; }
+    .summary-metric strong { display:block; margin-top:3px; font-size:13px; }
+    .status-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 9px; color:#168859; background:#e5f7ed; font-size:9px; font-weight:800; white-space:nowrap; }
+    .status-badge.off { color:#c54554; background:#fff0f2; }
+    .status-badge i { width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .modal-panels { display:grid; grid-template-columns:1fr; gap:12px; margin-top:13px; }
+    .data-panel { min-width:0; border:1px solid var(--border); border-radius:9px; padding:14px; background:#fff; }
+    .panel-title-row { display:flex; align-items:start; justify-content:space-between; gap:10px; }
+    .panel-title { font-size:11px; font-weight:750; }
+    .panel-subtitle { margin-top:4px; color:var(--text-secondary); font-size:9px; }
+    .period-tag { border:1px solid #e4eaf2; border-radius:6px; padding:5px 7px; color:#63738a; background:#fbfcfe; font-size:8px; white-space:nowrap; }
+    .timeline-bar { height:22px; display:flex; gap:3px; margin-top:18px; }
+    .timeline-segment { height:100%; border-radius:4px; }
+    .timeline-segment.running { background:#26b676; }
+    .timeline-segment.stopped { background:#e96774; }
+    .timeline-axis { display:flex; justify-content:space-between; margin-top:6px; color:var(--text-muted); font-size:8px; }
+    .timeline-legend { display:flex; gap:13px; margin-top:13px; color:var(--text-secondary); font-size:8px; }
+    .timeline-legend span { display:flex; align-items:center; gap:5px; }
+    .timeline-legend i { width:7px; height:7px; border-radius:2px; }
+    .timeline-events { margin-top:13px; display:grid; gap:8px; }
+    .timeline-event { display:grid; grid-template-columns:8px 1fr auto; gap:7px; align-items:center; font-size:8px; }
+    .timeline-event i { width:6px; height:6px; border-radius:50%; background:#20a96d; }
+    .timeline-event.stopped i { background:#e45d6a; }
+    .timeline-event span { color:#52637a; font-weight:650; }
+    .timeline-event time { color:var(--text-muted); }
+    .power-chart { display:block; width:100%; height:auto; margin-top:10px; overflow:visible; }
+    .chart-grid { stroke:#e9eef5; stroke-width:1; }
+    .chart-axis-label { fill:#8d9aab; font:9px Inter,system-ui,sans-serif; }
+    .chart-area { fill:rgba(40,100,220,.1); }
+    .chart-line { fill:none; stroke:var(--brand-primary); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .chart-point { fill:#fff; stroke:var(--brand-primary); stroke-width:2; }
+    .chart-caption { display:flex; align-items:center; gap:6px; margin-top:4px; color:var(--text-secondary); font-size:8px; }
+    .chart-caption i { width:7px; height:7px; border-radius:50%; background:var(--brand-primary); }
+    .modal-footnote { margin-top:12px; color:#8794a7; font-size:8px; }
+    .machine-modal { width:min(1040px,100%); }
+    .order-banner { display:grid; grid-template-columns:190px minmax(0,1fr) auto; gap:16px; align-items:center; padding:12px 14px; border:1px solid #cfe5f9; background:#edf7ff; border-radius:8px; }
+    .order-number { margin-top:4px; color:var(--text-primary); font-size:12px; font-weight:750; }
+    .order-sku { color:#6b7d96; font-size:10px; }
+    .line-status-block { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+    .line-status-label { color:#75869d; font-size:8px; font-weight:750; letter-spacing:.06em; text-transform:uppercase; }
+    .machine-flow { display:grid; grid-template-columns:94px 22px minmax(0,1fr) 22px 94px; gap:9px; align-items:center; margin:16px auto 0; max-width:870px; }
+    .material-port { min-height:56px; display:grid; place-items:center; padding:6px; border:1px solid #cfe6fb; border-radius:8px; background:#f0f8ff; color:#4b83ad; font-size:8px; font-weight:800; }
+    .material-port.output { border-color:#cceedd; background:#effaf4; color:#23905f; }
+    .flow-arrow { color:#2796c8; text-align:center; font-size:17px; }
+    .machine-card { border:1px solid #bfe6d1; border-top:4px solid #19aa6e; border-radius:9px; padding:14px 16px; background:#fff; }
+    .machine-name { font-size:14px; font-weight:750; }
+    .machine-id { margin-top:3px; color:var(--text-secondary); font-size:9px; }
+    .machine-divider { height:1px; background:#e8edf4; margin:10px 0 11px; }
+    .machine-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 18px; }
+    .machine-metric label { display:block; color:#71809a; font-size:8px; }
+    .machine-metric strong { display:block; margin-top:3px; color:var(--text-primary); font-size:11px; }
+    .machine-metric strong.metric-status { display:inline-flex; align-items:center; gap:5px; margin-top:5px; padding:4px 7px; border-radius:999px; font-size:9px; font-weight:800; }
+    .machine-metric strong.metric-status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .machine-metric strong.metric-status.good { color:#168859; background:#e5f7ed; }
+    .machine-metric strong.metric-status.bad { color:#c54554; background:#fff0f2; }
+    .nav-item { border:0; width:100%; text-align:left; background:transparent; font:inherit; cursor:pointer; }
+    .nav-item.sub { font-size:10px; }
+    .nav-item.sub.active { color:var(--brand-primary); background:var(--brand-soft); font-weight:700; }
+    .ops-header-tools { display:flex; align-items:center; gap:8px; }
+    .ops-tabs { display:flex; align-items:center; gap:5px; margin:14px 0 12px; padding:4px; border:1px solid var(--border); border-radius:9px; background:#fff; width:max-content; max-width:100%; }
+    .ops-tab { display:inline-flex; align-items:center; gap:7px; border:0; border-radius:6px; padding:8px 12px; color:#64748b; background:transparent; font:inherit; font-size:9px; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .ops-tab:hover { background:#f5f8fc; color:var(--text-primary); }
+    .ops-tab.active { color:var(--brand-primary); background:var(--brand-soft); }
+    .tab-count { min-width:16px; padding:2px 5px; border-radius:999px; color:#65758b; background:#eef2f7; text-align:center; font-size:8px; }
+    .ops-tab.active .tab-count { color:var(--brand-primary); background:#fff; }
+    .iot-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 9px; color:#168859; background:#e9f8f0; border-radius:999px; font-size:9px; font-weight:750; }
+    .iot-pill i { width:6px; height:6px; border-radius:50%; background:#15a76c; }
+    .ops-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:14px 0; }
+    .ops-kpi { border:1px solid var(--border); background:#fff; border-radius:9px; padding:12px 14px; box-shadow:var(--shadow); }
+    .ops-kpi label { display:block; color:#8290a5; font-size:8px; font-weight:750; letter-spacing:.06em; text-transform:uppercase; }
+    .ops-kpi strong { display:block; margin-top:5px; color:var(--text-primary); font-size:17px; }
+    .ops-kpi small { display:block; margin-top:3px; color:var(--text-secondary); font-size:9px; }
+    .ops-panel { border:1px solid var(--border); background:#fff; border-radius:10px; box-shadow:var(--shadow); overflow:hidden; }
+    .ops-panel-head { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid #edf1f6; }
+    .ops-panel-head h2 { margin:0; font-size:12px; }
+    .ops-panel-head p { margin:4px 0 0; color:var(--text-secondary); font-size:9px; }
+    .ops-table-wrap { overflow:auto; }
+    .ops-table { width:100%; border-collapse:collapse; min-width:680px; }
+    .ops-table th { padding:10px 12px; background:#fafbfd; border-bottom:1px solid var(--border); color:#7a899d; text-align:left; text-transform:uppercase; font-size:8px; letter-spacing:.055em; }
+    .ops-table td { padding:11px 12px; border-bottom:1px solid #f0f3f7; color:#4f6078; font-size:9px; white-space:nowrap; }
+    .ops-table tr:last-child td { border-bottom:0; }
+    .machine-cell strong,.drum-cell strong { display:block; color:var(--text-primary); font-size:10px; }
+    .machine-cell small,.drum-cell small { display:block; margin-top:3px; color:var(--text-secondary); font-size:8px; }
+    .table-status { display:inline-flex; align-items:center; gap:5px; color:#168859; font-size:8px; font-weight:750; }
+    .table-status i { width:6px; height:6px; border-radius:50%; background:#17aa6e; }
+    .table-status.idle { color:#a96a08; }
+    .table-status.idle i { background:#e9a12a; }
+    .view-drums,.ops-action { border:1px solid #d7e4f5; background:#fff; color:var(--brand-primary); border-radius:6px; padding:6px 9px; font:inherit; font-size:8px; font-weight:700; cursor:pointer; }
+    .view-drums:hover,.ops-action:hover { background:#f4f8ff; }
+    .back-button { margin-bottom:10px; border:0; padding:0; background:transparent; color:var(--brand-primary); font:inherit; font-size:9px; font-weight:700; cursor:pointer; }
+    .machine-ops-title { display:flex; align-items:start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .machine-ops-title h2 { margin:0; font-size:15px; }
+    .machine-ops-title p { margin:4px 0 0; color:var(--text-secondary); font-size:9px; }
+    .selection-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; border-top:1px solid var(--border); background:#f8faff; }
+    .selection-total strong { color:var(--text-primary); font-size:11px; }
+    .selection-total span { margin-left:8px; color:var(--text-secondary); font-size:9px; }
+    .ops-action.primary { border-color:var(--brand-primary); background:var(--brand-primary); color:#fff; }
+    .ops-action.primary:disabled { border-color:#cbd4e1; background:#cbd4e1; cursor:not-allowed; }
+    .group-result { margin:12px 14px; padding:10px 12px; border:1px solid #bde4cd; border-radius:8px; background:#f0fbf5; color:#24784f; font-size:9px; }
+    .group-result strong { color:#176740; }
+    .group-status { display:inline-flex; align-items:center; gap:5px; padding:4px 7px; border-radius:999px; color:#168859; background:#e9f8f0; font-size:8px; font-weight:750; }
+    .group-status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .group-status.unlinked { color:#71809a; background:#f0f3f7; }
+    .drum-id-list { max-width:260px; white-space:normal !important; color:#52637a; line-height:1.65; }
+    .danger-action { border-color:#f0c9ce; color:#c54554; }
+    .danger-action:hover { background:#fff5f6; }
+    .empty-groups { padding:28px 18px; text-align:center; color:var(--text-secondary); font-size:10px; }
+    .confirmation-summary { margin:12px 0; padding:12px; border-radius:8px; background:#f3f7fd; color:#50627a; font-size:10px; line-height:1.6; }
+    .confirmation-list { margin:8px 0 0; padding-left:18px; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:15px; }
+    .checkbox { width:14px; height:14px; accent-color:var(--brand-primary); vertical-align:middle; }
+    @media (max-width: 1050px) {
+      .app { grid-template-columns:150px minmax(0,1fr); }
+      .dashboard-grid { grid-template-columns:minmax(0,1fr) 174px; }
+      .content { padding-left:14px; padding-right:14px; }
+      .motor-track { gap:1px; }
+      .flow { grid-template-columns:36px minmax(0,1fr) 36px; gap:4px; }
+    }
+    @media (max-width: 760px) {
+      .app { grid-template-columns:1fr; }
+      .nav { display:none; }
+      .topbar { padding:0 14px; }
+      .toolbar .pill, .toolbar time { display:none; }
+      .filterbar { overflow:auto; padding:0 14px; }
+      .content { padding:14px; }
+      .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .dashboard-grid { grid-template-columns:1fr; }
+      .rail { grid-template-columns:repeat(2,minmax(0,1fr)); padding-top:0; }
+      .motor-track { overflow-x:auto; grid-template-columns:repeat(9,52px); padding-bottom:2px; }
+      .flow { grid-template-columns:34px minmax(0,1fr) 34px; }
+      .modal-backdrop { padding:10px; }
+      .modal-header,.modal-body { padding-left:13px; padding-right:13px; }
+      .modal-panels { grid-template-columns:1fr; }
+      .summary-metrics { gap:10px; }
+      .summary-metric:last-child { display:none; }
+      .machine-flow { grid-template-columns:56px 14px minmax(0,1fr) 14px 56px; gap:5px; }
+      .order-banner { grid-template-columns:1fr auto; }
+      .order-sku { grid-column:1/-1; grid-row:2; }
+      .machine-metrics { gap:10px; }
+      .ops-kpis { grid-template-columns:1fr; }
+      .machine-ops-title { flex-direction:column; }
+      .selection-bar { align-items:stretch; flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="nav">
+      <div class="logo">GENIESYS</div>
+      <nav class="nav-body">
+        <button class="nav-item active" id="exportNav" type="button"><span class="nav-icon">⌄</span> Aslak Expert</button>
+        <button class="nav-item" id="opsNav" type="button"><span class="nav-icon">⌄</span> Aslak Ops</button>
+      </nav>
+      <div class="nav-bottom">♧ &nbsp; Notification<div class="profile"><span class="avatar">LW</span><span><b>Lewis Verstappen</b><br><span style="color:#8794a7">lewis@mail.com</span></span></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumbs">Overview&nbsp; › &nbsp;Overview&nbsp; › &nbsp;Overview</div>
+        <div class="toolbar"><span class="live">● Live</span><span class="pill">Enterprise</span><span class="pill">AI</span><time>10:35:55</time><span>♧</span><span class="avatar" style="background:#1118c7;color:white">KH</span></div>
+      </header>
+      <div class="filterbar"><span style="color:#8592a6">▽</span><button class="filter">Date: Today⌄</button><button class="filter">Plant: All Plants⌄</button><button class="filter">Line: All Lines⌄</button><button class="filter">Shift: All Shifts⌄</button><span style="margin-left:auto;color:var(--success);font-size:9px">● Live · 2s refresh</span></div>
+      <section class="content" id="exportPage">
+        <div class="heading"><div><h1>Aslak Expert</h1><div class="subtitle">Live operational view for production lines</div></div><button class="shift">Current shift⌄</button></div>
+        <div class="kpis">
+          <div class="kpi"><div class="kpi-label">Operational status</div><div class="kpi-value" style="color:var(--success)">4 / 5</div><div class="kpi-note">Production lines running</div></div>
+          <div class="kpi"><div class="kpi-label">Produced Lenght</div><div class="kpi-value">8,950 M</div><div class="kpi-note">Current shift output</div></div>
+          <div class="kpi"><div class="kpi-label">Average speed</div><div class="kpi-value">1.54</div><div class="kpi-note">meters / second</div></div>
+          <div class="kpi"><div class="kpi-label">Critical alarms</div><div class="kpi-value" style="color:var(--danger)">2</div><div class="kpi-note">Need immediate attention</div></div>
+        </div>
+        <div class="dashboard-grid">
+          <section>
+            <div class="section-heading"><h2>Factory layout</h2><div class="legend"><span><i class="dot"></i> Running</span><span><i class="dot stopped"></i> Stopped</span><span><i class="dot idle"></i> Idle</span></div></div>
+            <div class="line-list" id="lines"></div>
+            <div class="note">Motor power values are sample data for this visual preview.</div>
+          </section>
+          <aside class="rail">
+            <div class="rail-card"><div class="rail-head"><strong>Active SKUs</strong><a href="#">3 LIVE</a></div>
+              <div class="sku"><div class="sku-top"><span>LINE 1</span><span class="sku-status">RUNNING</span></div><div class="sku-code">CU-1.20-MM</div><div class="sku-note">Copper wire </div></div>
+              <div class="sku"><div class="sku-top"><span>LINE 2</span><span class="sku-status">RUNNING</span></div><div class="sku-code">CU-1.50-MM</div><div class="sku-note">Copper wire </div></div>
+              <div class="sku"><div class="sku-top"><span>LINE 4</span><span class="sku-status">RUNNING</span></div><div class="sku-code">CU-2.50-MM</div><div class="sku-note">Copper wire </div></div>
+            </div>
+            <div class="rail-card"><div class="rail-head"><strong>Active alarms</strong><a href="#">View all</a></div>
+              <div class="alarm"><div class="alarm-title"><i class="status-mark"></i>Line 3 · Machine stopped <span class="alarm-time" style="margin-left:auto">16:30</span></div><div class="alarm-note">No signal received for 12 minutes.</div></div>
+              <div class="alarm"><div class="alarm-title"><i class="status-mark warn"></i>Line 5 · Idle <span class="alarm-time" style="margin-left:auto">18:30</span></div><div class="alarm-note">Waiting for a production order.</div></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+      <section class="content" id="opsPage" hidden>
+        <div class="heading">
+          <div><h1>Aslak Ops</h1><div class="subtitle">Review IoT-captured drums and combine lengths from one machine.</div></div>
+          <div class="ops-header-tools"><span class="iot-pill"><i></i> IoT connected · Auto capture</span><button class="shift">Current shift⌄</button></div>
+        </div>
+        <div class="ops-tabs" role="tablist" aria-label="Aslak Ops sections">
+          <button class="ops-tab active" id="overviewTab" type="button" role="tab" aria-selected="true">Overview</button>
+          <button class="ops-tab" id="consolidationTab" type="button" role="tab" aria-selected="false">Drum consolidation</button>
+          <button class="ops-tab" id="combinedTab" type="button" role="tab" aria-selected="false">Combined drums <span class="tab-count" id="combinedTabCount">0</span></button>
+        </div>
+        <div id="machineOverview">
+          <div class="ops-kpis">
+            <div class="ops-kpi"><label>Machines</label><strong id="machineCount">5</strong><small>Available in this plant</small></div>
+            <div class="ops-kpi"><label>Drums captured</label><strong id="allDrumCount">0</strong><small>Automatically received from IoT</small></div>
+            <div class="ops-kpi"><label>Total length</label><strong id="allDrumMeters">0 m</strong><small>Across all listed machines</small></div>
+          </div>
+          <div class="ops-panel">
+            <div class="ops-panel-head"><div><h2>Machines</h2><p>Open one machine to review and group its drums.</p></div><span class="iot-pill"><i></i> Live feed</span></div>
+            <div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Machine</th><th>Line</th><th>Status</th><th>Drums this shift</th><th>Total length</th><th></th></tr></thead><tbody id="machineRows"></tbody></table></div>
+          </div>
+        </div>
+        <div id="consolidationView" hidden>
+          <div id="consolidationPicker">
+            <div class="ops-panel">
+              <div class="ops-panel-head"><div><h2>Select a machine</h2><p>Drums can only be combined with other drums from the same machine.</p></div><span class="iot-pill"><i></i> IoT captured</span></div>
+              <div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Machine</th><th>Line</th><th>Status</th><th>Available drums</th><th>Total length</th><th></th></tr></thead><tbody id="consolidationMachineRows"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+        <div id="machineDrumsView" hidden>
+          <button class="back-button" id="backToMachines">← All machines</button>
+          <div class="machine-ops-title"><div><h2 id="selectedMachineHeading">Machine Name</h2><p id="selectedMachineSubheading">Line 1 · Drum records received from the machine IoT gateway</p></div><span class="iot-pill"><i></i> IoT connected · Auto capture</span></div>
+          <div class="ops-kpis">
+            <div class="ops-kpi"><label>Drums captured</label><strong id="machineDrumCount">0</strong><small>Current shift</small></div>
+            <div class="ops-kpi"><label>Available to group</label><strong id="availableDrumCount">0</strong><small>Not grouped yet</small></div>
+            <div class="ops-kpi"><label>Total length</label><strong id="machineDrumMeters">0 m</strong><small>Length supplied automatically by IoT</small></div>
+          </div>
+          <div class="ops-panel">
+            <div class="ops-panel-head"><div><h2>Drums from this machine</h2><p>Select drums from this machine only. Each length is captured automatically.</p></div><button class="filter">Date: Today⌄</button></div>
+            <div class="ops-table-wrap"><table class="ops-table"><thead><tr><th><input class="checkbox" id="selectAllDrums" type="checkbox" aria-label="Select all available drums"></th><th>Drum ID</th><th>Captured at</th><th>Length</th><th>Source</th><th>Group status</th></tr></thead><tbody id="drumRows"></tbody></table></div>
+            <div class="selection-bar"><div class="selection-total"><strong id="selectionCount">0 drums selected</strong><span id="selectionMeters">0.0 m total</span></div><button class="ops-action primary" id="combineButton" type="button" disabled>Combine as one drum</button></div>
+          </div>
+          <div class="group-result" id="groupResult" hidden></div>
+          <div class="note">Preview data only. In production, drum IDs and meter lengths will arrive automatically from the IoT gateway.</div>
+        </div>
+        <div id="combinedDrumsView" hidden>
+          <div class="ops-kpis">
+            <div class="ops-kpi"><label>Active groups</label><strong id="activeGroupCount">0</strong><small>Combined on this shift</small></div>
+            <div class="ops-kpi"><label>Drums grouped</label><strong id="groupedDrumCount">0</strong><small>Across all machines</small></div>
+            <div class="ops-kpi"><label>Combined length</label><strong id="combinedMeters">0.0 m</strong><small>Active groups only</small></div>
+          </div>
+          <div class="ops-panel">
+            <div class="ops-panel-head"><div><h2>Combined drums</h2><p>Each group belongs to one machine. Unlinking returns its drums to the available list.</p></div><span class="iot-pill"><i></i> Group register</span></div>
+            <div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Group ID</th><th>Machine / line</th><th>Drums included</th><th>Drum count</th><th>Total length</th><th>Created</th><th>Status</th><th></th></tr></thead><tbody id="combinedRows"></tbody></table></div>
+            <div class="empty-groups" id="emptyGroups" hidden>No combined drums yet. Select drums from one machine and combine them to see the group here.</div>
+          </div>
+          <div class="note">Unlinked groups stay in this register as history. Their source drums become available for a new group.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="motorModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
+    <section class="modal">
+      <header class="modal-header">
+        <div><div class="modal-title" id="modalTitle">Line · Motor</div><div class="modal-subtitle">Motor status and operating history</div></div>
+        <button class="close-button" id="closeModal" type="button">Close</button>
+      </header>
+      <div class="modal-body">
+        <div class="motor-summary">
+          <div class="summary-icon" id="modalMotorIcon"></div>
+          <div class="summary-details"><div class="eyebrow">Selected motor</div><div class="summary-name" id="summaryName">M-01</div><div class="summary-context" id="summaryContext">Line 1 · Wire drawing</div></div>
+          <div class="summary-metrics"><div class="summary-metric"><label>Current power</label><strong id="currentPower">0.0 kW</strong></div><div class="summary-metric"><label>Peak power</label><strong id="peakPower">0.0 kW</strong></div></div>
+          <span class="status-badge" id="currentStatus"><i></i><span>RUNNING</span></span>
+        </div>
+        <div class="modal-panels">
+          <section class="data-panel">
+            <div class="panel-title-row"><div><div class="panel-title">Status timeline</div><div class="panel-subtitle">State changes during the current shift</div></div><span class="period-tag">08:00–16:00</span></div>
+            <div class="timeline-bar" id="timelineBar" aria-label="Motor status timeline"></div>
+            <div class="timeline-axis"><span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span></div>
+            <div class="timeline-legend"><span><i style="background:#26b676"></i>Running</span><span><i style="background:#e96774"></i>Stopped</span></div>
+            <div class="timeline-events" id="timelineEvents"></div>
+          </section>
+          
+        </div>
+        <div class="modal-footnote">Telemetry shown here is sample data for the preview and will be replaced by live machine signals.</div>
+      </div>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="lineDetailsModal" role="dialog" aria-modal="true" aria-labelledby="lineModalTitle" aria-hidden="true">
+    <section class="modal machine-modal">
+      <header class="modal-header">
+        <div><div class="modal-title" id="lineModalTitle">Line 2 · Machine</div><div class="modal-subtitle">Live machine parameters</div></div>
+        <button class="close-button" id="closeLineModal" type="button">Close</button>
+      </header>
+      <div class="modal-body">
+        <div class="order-banner">
+          <div class="order-sku" id="orderSku">SKU: CU-1.50-MM · Copper wire process</div>
+          <div class="line-status-block"><span class="line-status-label">Status</span><span class="status-badge" id="lineStatus"><i></i><span>RUNNING</span></span></div>
+        </div>
+        <div class="machine-flow">
+          <div class="material-port">RAW WIRE</div>
+          <div class="flow-arrow">→</div>
+          <section class="machine-card">
+            <div class="machine-name" id="machineName">Machine 2</div>
+            <div class="machine-id" id="machineId">DM-02 · Live telemetry</div>
+            <div class="machine-divider"></div>
+            <div class="machine-metrics">
+              <div class="machine-metric"><label>Speed</label><strong id="detailSpeed">91.2 m/s</strong></div>
+              <div class="machine-metric"><label>Average speed</label><strong id="detailAverageSpeed">1.50 m/s</strong></div>
+              <div class="machine-metric"><label>Weight (est.)</label><strong id="detailWeight">2,210 kg</strong></div>
+              <div class="machine-metric"><label>Drawn length</label><strong id="detailMeters">11,360 m</strong></div>
+              <div class="machine-metric"><label>Setting speed</label><strong id="detailSettingSpeed">100 m/s</strong></div>
+              <div class="machine-metric"><label>Wire diameter</label><strong id="detailDiameter">1.50 mm</strong></div>
+              <div class="machine-metric"><label>Temperature</label><strong id="detailTemperature">42.6 °C</strong></div>
+              <div class="machine-metric"><label>Last signal</label><strong id="detailSignal">16:41:56</strong></div>
+            </div>
+          </section>
+          <div class="flow-arrow">→</div>
+          <div class="material-port output">DRAWN WIRE</div>
+        </div>
+        <div class="modal-footnote">These values are placeholders for now. They will come from the real machine signal when the integration is available.</div>
+      </div>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="combineModal" role="dialog" aria-modal="true" aria-labelledby="combineModalTitle" aria-hidden="true">
+    <section class="modal" style="width:min(520px,100%)">
+      <header class="modal-header"><div><div class="modal-title" id="combineModalTitle">Combine selected drums</div><div class="modal-subtitle">Review the one-machine group before creating it.</div></div><button class="close-button" id="cancelCombineTop" type="button">Close</button></header>
+      <div class="modal-body">
+        <div class="eyebrow">Combined length</div>
+        <div style="font-size:26px;font-weight:800;color:var(--text-primary);margin-top:4px" id="combinedLengthPreview">0.0 m</div>
+        <div class="confirmation-summary"><strong id="combineMachineLabel">Machine Name · Line 1</strong><ul class="confirmation-list" id="combineDrumList"></ul></div>
+        <div class="modal-footnote">The selected drums will be linked under one combined record. Their original IoT records remain available for traceability.</div>
+        <div class="modal-actions"><button class="close-button" id="cancelCombine" type="button">Cancel</button><button class="ops-action primary" id="confirmCombine" type="button">Create combined drum</button></div>
+      </div>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="unlinkModal" role="dialog" aria-modal="true" aria-labelledby="unlinkModalTitle" aria-hidden="true">
+    <section class="modal" style="width:min(480px,100%)">
+      <header class="modal-header"><div><div class="modal-title" id="unlinkModalTitle">Unlink combined drum?</div><div class="modal-subtitle">The group will be kept in history.</div></div><button class="close-button" id="cancelUnlinkTop" type="button">Close</button></header>
+      <div class="modal-body"><div class="confirmation-summary" id="unlinkSummary"></div><div class="modal-footnote">The source drums will return to the machine’s available list and can be grouped again.</div><div class="modal-actions"><button class="close-button" id="cancelUnlink" type="button">Cancel</button><button class="ops-action primary" id="confirmUnlink" type="button">Unlink drums</button></div></div>
+    </section>
+  </div>
+  <script>
+    const lines = [
+      { name: "Line 1", detail: "Machine Name", state: "RUNNING", kind: "", active: [1,2,3,4,5,6,7], speed:"98.8 m/s", averageSpeed:"1.61 m/s", diameter:"1.20 mm", temperature:"41.8 °C", faultStatus:"CLEAR", voltageStatus:"NORMAL · 400 V", settingSpeed:"105 m/s", power:[2.4,2.1,1.8,2.7,2.3,2.0,1.6,0,0], order:"ASL-DRW-2026-041", sku:"CU-1.20-MM", machine:"Machine Name", machineId:"Machine ID", weight:"2,460 kg", meters:"12,140 m", signal:"16:41:40" },
+      { name: "Line 2", detail: "Machine Name", state: "RUNNING", kind: "", active: [1,2,3,4,5,6,7,8,9], speed:"91.2 m/s", averageSpeed:"1.50 m/s", diameter:"1.50 mm", temperature:"42.6 °C", faultStatus:"CLEAR", voltageStatus:"NORMAL · 400 V", settingSpeed:"100 m/s", power:[2.1,2.4,2.0,2.3,1.9,2.5,2.1,1.8,2.0], order:"ASL-DRW-2026-042", sku:"CU-1.50-MM", machine:"Machine Name", machineId:"Machine ID", weight:"2,210 kg", meters:"11,360 m", signal:"16:41:56" },
+      { name: "Line 3", detail: "Machine Name", state: "4 / 9 RUNNING", kind: "mixed", active: [1,2,3,5], speed:"0 m/s", averageSpeed:"1.12 m/s", diameter:"1.00 mm", temperature:"48.2 °C", faultStatus:"ACTIVE · STOPPED", voltageStatus:"LOW · 352 V", settingSpeed:"90 m/s", power:[0,0,0,0,1.9,0,2.2,0,0], order:"ASL-DRW-2026-043", sku:"CU-1.00-MM", machine:"Machine Name", machineId:"Machine ID", weight:"1,540 kg", meters:"8,230 m", signal:"16:41:22" },
+      { name: "Line 4", detail: "Machine Name", state: "RUNNING", kind: "", active: [1,2,3,4,5,6,7,8,9], speed:"94.5 m/s", averageSpeed:"1.54 m/s", diameter:"2.50 mm", temperature:"43.1 °C", faultStatus:"CLEAR", voltageStatus:"NORMAL · 400 V", settingSpeed:"100 m/s", power:[2.2,2.0,2.5,1.9,2.3,2.4,1.8,2.1,2.3], order:"ASL-DRW-2026-044", sku:"CU-2.50-MM", machine:"Machine Name", machineId:"Machine ID", weight:"2,720 kg", meters:"14,050 m", signal:"16:41:48" },
+      { name: "Line 5", detail: "Machine Name", state: "IDLE", kind: "mixed", active: [], speed:"0 m/s", averageSpeed:"1.25 m/s", diameter:"—", temperature:"39.5 °C", faultStatus:"CLEAR", voltageStatus:"NORMAL · 400 V", settingSpeed:"—", power:[0,0,0,0,0,0,0,0,0], order:"No active production order", sku:"—", machine:"Machine Name", machineId:"Machine ID", weight:"1,180 kg", meters:"6,510 m", signal:"16:39:02" },
+    ];
+    const motorSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8.2h10.2a2 2 0 0 1 2 2v3.6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3.6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.4"/><path d="M17.2 10.2h2.3v3.6h-2.3M7 8.2V6.8m3.4 1.4V6.8m3.4 1.4V6.8M7.2 15.8v1.4m3.4-1.4v1.4m3.4-1.4v1.4M7.3 10.8v2.4m2.6-2.4v2.4m2.6-2.4v2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M19.5 11.1 22 12l-2.5.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    document.getElementById("lines").innerHTML = lines.map((line, li) => {
+      const motors = Array.from({length:9}, (_,i) => {
+        const on = line.active.includes(i+1);
+        const label = `Open ${line.name}, motor ${String(i+1).padStart(2,"0")}`;
+        return `<button class="motor ${on ? "running" : "stopped"}" type="button" data-line="${li}" data-motor="${i}" aria-label="${label}"><span class="motor-icon">${motorSvg}</span><span class="motor-name">M-${String(i+1).padStart(2,"0")}</span><span class="motor-state">${on ? "ON" : "OFF"}</span><span class="motor-power">${line.power[i].toFixed(1)} kW</span></button>`;
+      }).join("");
+      return `<article class="line-card" data-line-details="${li}" tabindex="0" aria-label="Open ${line.name} machine details"><div class="line-head"><div class="line-title"><strong>${line.name}</strong><span>${line.detail}</span></div><span class="line-state ${line.kind}">● ${line.state}</span></div><div class="flow"><div class="port">IN</div><div class="motor-track">${motors}</div><div class="port out">OUT</div></div><div class="line-foot"><span>${line.speed}</span><span class="link-button">Details →</span></div></article>`;
+    }).join("");
+
+    const modal = document.getElementById("motorModal");
+    const closeButton = document.getElementById("closeModal");
+    const modalMotorIcon = document.getElementById("modalMotorIcon");
+    const lineDetailsModal = document.getElementById("lineDetailsModal");
+    const closeLineModal = document.getElementById("closeLineModal");
+    let lastMotorButton = null;
+    let lastLineDetailsButton = null;
+
+    function openMotorModal(lineIndex, motorIndex, button) {
+      const line = lines[lineIndex];
+      const motorNumber = motorIndex + 1;
+      const on = line.active.includes(motorNumber);
+      const currentPower = line.power[motorIndex];
+      const motorName = `M-${String(motorNumber).padStart(2,"0")}`;
+      const status = on ? "RUNNING" : "STOPPED";
+      const idle = line.state === "IDLE";
+      const intervals = idle ? [
+        {state:"stopped",width:100,start:"08:00",end:"16:00"},
+      ] : on ? [
+        {state:"running",width:22,start:"08:00",end:"09:46"},
+        {state:"stopped",width:6,start:"09:46",end:"10:15"},
+        {state:"running",width:43,start:"10:15",end:"13:42"},
+        {state:"stopped",width:5,start:"13:42",end:"14:06"},
+        {state:"running",width:24,start:"14:06",end:"16:00"},
+      ] : [
+        {state:"running",width:24,start:"08:00",end:"09:55"},
+        {state:"stopped",width:13,start:"09:55",end:"10:59"},
+        {state:"running",width:35,start:"10:59",end:"13:47"},
+        {state:"stopped",width:28,start:"13:47",end:"16:00"},
+      ];
+      const timeline = document.getElementById("timelineBar");
+      timeline.innerHTML = intervals.map(part => `<span class="timeline-segment ${part.state}" style="width:${part.width}%" title="${part.state === "running" ? "Running" : "Stopped"}: ${part.start}–${part.end}"></span>`).join("");
+      document.getElementById("timelineEvents").innerHTML = intervals.map(part => `<div class="timeline-event ${part.state === "stopped" ? "stopped" : ""}"><i></i><span>${part.state === "running" ? "Running" : "Stopped"}</span><time>${part.start}–${part.end}</time></div>`).join("");
+
+      let series;
+      if (idle) series = [0,0,0,0,0,0,0,0,0];
+      else if (on && currentPower > 0) series = [0.66,0.82,0.76,0.94,0.88,1.04,0.96,1.1,1].map(multiplier => +(currentPower * multiplier).toFixed(2));
+      else if (on) series = [0.8,1.1,0.9,1.4,1.2,0.7,0.3,0.2,0];
+      else series = [1.6,1.8,1.7,1.4,1.3,0.8,0.2,0,0];
+
+      document.getElementById("modalTitle").textContent = `${line.name} · Motor ${String(motorNumber).padStart(2,"0")}`;
+      document.getElementById("summaryName").textContent = motorName;
+      document.getElementById("summaryContext").textContent = `${line.name} · ${line.detail}`;
+      document.getElementById("currentPower").textContent = `${currentPower.toFixed(1)} kW`;
+      document.getElementById("peakPower").textContent = `${Math.max(...series).toFixed(1)} kW`;
+      const statusBadge = document.getElementById("currentStatus");
+      statusBadge.classList.toggle("off", !on);
+      statusBadge.querySelector("span").textContent = status;
+      modalMotorIcon.innerHTML = motorSvg;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      lastMotorButton = button;
+      closeButton.focus();
+    }
+
+    function openLineDetails(lineIndex, button) {
+      const line = lines[lineIndex];
+      document.getElementById("lineModalTitle").textContent = `${line.name} · Machine`;
+      document.getElementById("orderSku").textContent = line.sku === "—" ? "No active SKU · Wire drawing" : `SKU: ${line.sku} · Copper wire process`;
+      document.getElementById("machineName").textContent = line.machine;
+      document.getElementById("machineId").textContent = `${line.machineId} · Live telemetry`;
+      document.getElementById("detailSpeed").textContent = line.speed;
+      document.getElementById("detailAverageSpeed").textContent = line.averageSpeed;
+      document.getElementById("detailDiameter").textContent = line.diameter;
+      document.getElementById("detailTemperature").textContent = line.temperature;
+      document.getElementById("detailWeight").textContent = line.weight;
+      document.getElementById("detailMeters").textContent = line.meters;
+      document.getElementById("detailSettingSpeed").textContent = line.settingSpeed;
+      document.getElementById("detailSignal").textContent = line.signal;
+      const status = document.getElementById("lineStatus");
+      status.classList.toggle("off", line.state === "IDLE");
+      status.querySelector("span").textContent = line.state;
+      lineDetailsModal.classList.add("open");
+      lineDetailsModal.setAttribute("aria-hidden", "false");
+      lastLineDetailsButton = button;
+      closeLineModal.focus();
+    }
+
+    document.getElementById("lines").addEventListener("click", event => {
+      const motorButton = event.target.closest(".motor");
+      if (motorButton) {
+        openMotorModal(Number(motorButton.dataset.line), Number(motorButton.dataset.motor), motorButton);
+        return;
+      }
+      const lineCard = event.target.closest(".line-card");
+      if (lineCard) openLineDetails(Number(lineCard.dataset.lineDetails), lineCard);
+    });
+    document.getElementById("lines").addEventListener("keydown", event => {
+      if ((event.key !== "Enter" && event.key !== " ") || event.target.closest(".motor")) return;
+      const lineCard = event.target.closest(".line-card");
+      if (!lineCard) return;
+      event.preventDefault();
+      openLineDetails(Number(lineCard.dataset.lineDetails), lineCard);
+    });
+    function closeMotorModal() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      if (lastMotorButton) lastMotorButton.focus();
+    }
+    closeButton.addEventListener("click", closeMotorModal);
+    modal.addEventListener("click", event => { if (event.target === modal) closeMotorModal(); });
+    closeLineModal.addEventListener("click", () => {
+      lineDetailsModal.classList.remove("open");
+      lineDetailsModal.setAttribute("aria-hidden", "true");
+      if (lastLineDetailsButton) lastLineDetailsButton.focus();
+    });
+    lineDetailsModal.addEventListener("click", event => { if (event.target === lineDetailsModal) closeLineModal.click(); });
+
+    const machineDrumSamples = [
+      [["DR-001","08:14:12",5],["DR-002","08:52:38",70],["DR-003","09:40:06",22],["DR-004","10:18:44",38],["DR-005","10:47:31",16]],
+      [["DR-101","08:08:20",5],["DR-102","08:44:05",70],["DR-103","09:36:42",26],["DR-104","10:12:18",14],["DR-105","10:51:09",43]],
+      [["DR-201","08:23:14",32],["DR-202","09:07:53",48],["DR-203","10:02:41",5],["DR-204","10:39:26",70]],
+      [["DR-301","08:19:08",18],["DR-302","08:57:47",36],["DR-303","09:45:52",70],["DR-304","10:21:33",42],["DR-305","10:56:17",12]],
+      [["DR-401","08:34:22",5],["DR-402","09:29:16",20],["DR-403","10:43:08",30]],
+    ];
+    const opsMachines = lines.map((line, index) => ({
+      key:index,
+      name:line.machine,
+      line:line.name,
+      state:line.state === "IDLE" ? "IDLE" : "RUNNING",
+      drums:machineDrumSamples[index].map(([id,time,meters]) => ({id,time,meters,groupId:null})),
+    }));
+    const machineOverview = document.getElementById("machineOverview");
+    const consolidationView = document.getElementById("consolidationView");
+    const consolidationPicker = document.getElementById("consolidationPicker");
+    const machineDrumsView = document.getElementById("machineDrumsView");
+    const machineRows = document.getElementById("machineRows");
+    const consolidationMachineRows = document.getElementById("consolidationMachineRows");
+    const drumRows = document.getElementById("drumRows");
+    const combinedRows = document.getElementById("combinedRows");
+    const combineModal = document.getElementById("combineModal");
+    const unlinkModal = document.getElementById("unlinkModal");
+    const selectedDrumIds = new Set();
+    const combinedGroups = [];
+    let selectedMachine = null;
+    let pendingUnlinkGroup = null;
+    let nextGroupNumber = 1;
+
+    function totalMeters(machine) { return machine.drums.reduce((sum, drum) => sum + drum.meters, 0); }
+    function availableDrums(machine) { return machine.drums.filter(drum => !drum.groupId); }
+
+    function renderMachineOverview() {
+      const drumCount = opsMachines.reduce((sum, machine) => sum + machine.drums.length, 0);
+      const meters = opsMachines.reduce((sum, machine) => sum + totalMeters(machine), 0);
+      document.getElementById("machineCount").textContent = String(opsMachines.length);
+      document.getElementById("allDrumCount").textContent = String(drumCount);
+      document.getElementById("allDrumMeters").textContent = `${meters.toFixed(1)} m`;
+      machineRows.innerHTML = opsMachines.map(machine => `
+        <tr>
+          <td><div class="machine-cell"><strong>${machine.name}</strong><small>Placeholder name · IoT auto capture</small></div></td>
+          <td>${machine.line}</td>
+          <td><span class="table-status ${machine.state === "IDLE" ? "idle" : ""}"><i></i>${machine.state}</span></td>
+          <td>${machine.drums.length}</td>
+          <td><strong>${totalMeters(machine).toFixed(1)} m</strong></td>
+          <td><button class="view-drums" type="button" data-open-machine="${machine.key}">View drums →</button></td>
+        </tr>`).join("");
+      consolidationMachineRows.innerHTML = opsMachines.map(machine => `
+        <tr>
+          <td><div class="machine-cell"><strong>${machine.name}</strong><small>IoT auto capture</small></div></td>
+          <td>${machine.line}</td>
+          <td><span class="table-status ${machine.state === "IDLE" ? "idle" : ""}"><i></i>${machine.state}</span></td>
+          <td>${availableDrums(machine).length} available</td>
+          <td><strong>${totalMeters(machine).toFixed(1)} m</strong></td>
+          <td><button class="view-drums" type="button" data-open-consolidation="${machine.key}">Select drums →</button></td>
+        </tr>`).join("");
+    }
+
+    function renderCombinedGroups() {
+      const activeGroups = combinedGroups.filter(group => group.status === "COMBINED");
+      document.getElementById("activeGroupCount").textContent = String(activeGroups.length);
+      document.getElementById("groupedDrumCount").textContent = String(activeGroups.reduce((sum, group) => sum + group.drumIds.length, 0));
+      document.getElementById("combinedMeters").textContent = `${activeGroups.reduce((sum, group) => sum + group.meters, 0).toFixed(1)} m`;
+      document.getElementById("emptyGroups").hidden = combinedGroups.length > 0;
+      document.getElementById("combinedTabCount").textContent = String(activeGroups.length);
+      combinedRows.innerHTML = combinedGroups.map(group => `
+        <tr>
+          <td><strong>${group.id}</strong></td>
+          <td><div class="machine-cell"><strong>${group.machineName}</strong><small>${group.line}</small></div></td>
+          <td><div class="drum-id-list">${group.drumIds.join(" · ")}</div></td>
+          <td>${group.drumIds.length}</td>
+          <td><strong>${group.meters.toFixed(1)} m</strong></td>
+          <td>${group.createdAt}</td>
+          <td><span class="group-status ${group.status === "UNLINKED" ? "unlinked" : ""}">${group.status === "UNLINKED" ? "Unlinked" : "Combined"}</span></td>
+          <td>${group.status === "COMBINED" ? `<button class="ops-action danger-action" type="button" data-unlink-group="${group.id}">Unlink</button>` : `<span style="color:#8a97aa">In history</span>`}</td>
+        </tr>`).join("");
+    }
+
+    function showOpsView(view) {
+      document.getElementById("exportPage").hidden = true;
+      document.getElementById("opsPage").hidden = false;
+      document.getElementById("exportNav").classList.remove("active");
+      document.getElementById("opsNav").classList.add("active");
+      machineOverview.hidden = view !== "overview";
+      consolidationView.hidden = view !== "consolidation" && view !== "machine";
+      consolidationPicker.hidden = view === "machine";
+      machineDrumsView.hidden = view !== "machine";
+      document.getElementById("combinedDrumsView").hidden = view !== "combined";
+      const activeTab = view === "machine" ? "consolidation" : view;
+      document.querySelectorAll(".ops-tab").forEach(button => {
+        const isActive = button.dataset.tab === activeTab;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+      });
+    }
+
+    function renderDrums() {
+      if (!selectedMachine) return;
+      const machine = opsMachines[selectedMachine.key];
+      document.getElementById("selectedMachineHeading").textContent = `${machine.name} · ${machine.line}`;
+      document.getElementById("selectedMachineSubheading").textContent = `${machine.line} · Drum lengths captured automatically by IoT`;
+      document.getElementById("machineDrumCount").textContent = String(machine.drums.length);
+      document.getElementById("availableDrumCount").textContent = String(availableDrums(machine).length);
+      document.getElementById("machineDrumMeters").textContent = `${totalMeters(machine).toFixed(1)} m`;
+      drumRows.innerHTML = machine.drums.map(drum => `
+        <tr>
+          <td><input class="checkbox drum-checkbox" type="checkbox" data-drum-id="${drum.id}" aria-label="Select ${drum.id}" ${drum.groupId ? "disabled" : ""} ${selectedDrumIds.has(drum.id) ? "checked" : ""}></td>
+          <td><div class="drum-cell"><strong>${drum.id}</strong><small>${machine.line} · ${machine.name}</small></div></td>
+          <td>Today · ${drum.time}</td>
+          <td><strong>${drum.meters.toFixed(1)} m</strong></td>
+          <td><span class="table-status"><i></i>IoT captured</span></td>
+          <td>${drum.groupId ? `<span class="table-status">Grouped · ${drum.groupId}</span>` : `<span style="color:#8a97aa">Available</span>`}</td>
+        </tr>`).join("");
+      const groupResult = document.getElementById("groupResult");
+      if (selectedMachine.lastGroup) {
+        const group = selectedMachine.lastGroup;
+        groupResult.hidden = false;
+        groupResult.innerHTML = `<strong>${group.id}</strong> created for ${machine.name} · ${machine.line}: ${group.drumIds.length} drums combined into <strong>${group.meters.toFixed(1)} m</strong>. Source drums remain traceable.`;
+      } else {
+        groupResult.hidden = true;
+      }
+      updateDrumSelection();
+    }
+
+    function updateDrumSelection() {
+      if (!selectedMachine) return;
+      const machine = opsMachines[selectedMachine.key];
+      const selected = machine.drums.filter(drum => selectedDrumIds.has(drum.id) && !drum.groupId);
+      const meters = selected.reduce((sum, drum) => sum + drum.meters, 0);
+      document.getElementById("selectionCount").textContent = `${selected.length} drum${selected.length === 1 ? "" : "s"} selected`;
+      document.getElementById("selectionMeters").textContent = `${meters.toFixed(1)} m total`;
+      document.getElementById("combineButton").disabled = selected.length < 1;
+      const selectAll = document.getElementById("selectAllDrums");
+      const available = availableDrums(machine);
+      selectAll.checked = available.length > 0 && selected.length === available.length;
+      selectAll.indeterminate = selected.length > 0 && selected.length < available.length;
+    }
+
+    function openMachine(machineKey) {
+      selectedMachine = opsMachines[machineKey];
+      selectedDrumIds.clear();
+      showOpsView("machine");
+      renderDrums();
+    }
+
+    function closeCombineModal() {
+      combineModal.classList.remove("open");
+      combineModal.setAttribute("aria-hidden", "true");
+    }
+
+    function showCombineReview() {
+      if (!selectedMachine) return;
+      const machine = opsMachines[selectedMachine.key];
+      const selected = machine.drums.filter(drum => selectedDrumIds.has(drum.id) && !drum.groupId);
+      if (!selected.length) return;
+      const total = selected.reduce((sum, drum) => sum + drum.meters, 0);
+      document.getElementById("combinedLengthPreview").textContent = `${total.toFixed(1)} m`;
+      document.getElementById("combineMachineLabel").textContent = `${machine.name} · ${machine.line}`;
+      document.getElementById("combineDrumList").innerHTML = selected.map(drum => `<li>${drum.id} — ${drum.meters.toFixed(1)} m</li>`).join("");
+      combineModal.classList.add("open");
+      combineModal.setAttribute("aria-hidden", "false");
+    }
+
+    renderMachineOverview();
+    renderCombinedGroups();
+    document.getElementById("opsNav").addEventListener("click", () => showOpsView("overview"));
+    document.getElementById("overviewTab").dataset.tab = "overview";
+    document.getElementById("consolidationTab").dataset.tab = "consolidation";
+    document.getElementById("combinedTab").dataset.tab = "combined";
+    document.getElementById("overviewTab").addEventListener("click", () => showOpsView("overview"));
+    document.getElementById("consolidationTab").addEventListener("click", () => showOpsView("consolidation"));
+    document.getElementById("combinedTab").addEventListener("click", () => {
+      renderCombinedGroups();
+      showOpsView("combined");
+    });
+    document.getElementById("exportNav").addEventListener("click", () => {
+      document.getElementById("opsPage").hidden = true;
+      document.getElementById("exportPage").hidden = false;
+      document.getElementById("opsNav").classList.remove("active");
+      document.getElementById("exportNav").classList.add("active");
+    });
+    machineRows.addEventListener("click", event => {
+      const button = event.target.closest("[data-open-machine]");
+      if (button) openMachine(Number(button.dataset.openMachine));
+    });
+    consolidationMachineRows.addEventListener("click", event => {
+      const button = event.target.closest("[data-open-consolidation]");
+      if (button) openMachine(Number(button.dataset.openConsolidation));
+    });
+    document.getElementById("backToMachines").addEventListener("click", () => {
+      selectedDrumIds.clear();
+      showOpsView("consolidation");
+      renderMachineOverview();
+    });
+    drumRows.addEventListener("change", event => {
+      const checkbox = event.target.closest(".drum-checkbox");
+      if (!checkbox) return;
+      if (checkbox.checked) selectedDrumIds.add(checkbox.dataset.drumId);
+      else selectedDrumIds.delete(checkbox.dataset.drumId);
+      updateDrumSelection();
+    });
+    document.getElementById("selectAllDrums").addEventListener("change", event => {
+      if (!selectedMachine) return;
+      const available = availableDrums(opsMachines[selectedMachine.key]);
+      if (event.target.checked) available.forEach(drum => selectedDrumIds.add(drum.id));
+      else available.forEach(drum => selectedDrumIds.delete(drum.id));
+      renderDrums();
+    });
+    document.getElementById("combineButton").addEventListener("click", showCombineReview);
+    document.getElementById("cancelCombine").addEventListener("click", closeCombineModal);
+    document.getElementById("cancelCombineTop").addEventListener("click", closeCombineModal);
+    combineModal.addEventListener("click", event => { if (event.target === combineModal) closeCombineModal(); });
+    document.getElementById("confirmCombine").addEventListener("click", () => {
+      if (!selectedMachine) return;
+      const machine = opsMachines[selectedMachine.key];
+      const selected = machine.drums.filter(drum => selectedDrumIds.has(drum.id) && !drum.groupId);
+      if (!selected.length) return;
+      const group = {
+        id:`DG-${String(nextGroupNumber++).padStart(3,"0")}`,
+        drumIds:selected.map(drum => drum.id),
+        meters:selected.reduce((sum, drum) => sum + drum.meters, 0),
+        machineKey:machine.key,
+        machineName:machine.name,
+        line:machine.line,
+        createdAt:`Today · ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`,
+        status:"COMBINED",
+      };
+      selected.forEach(drum => { drum.groupId = group.id; });
+      combinedGroups.unshift(group);
+      machine.lastGroup = group;
+      selectedDrumIds.clear();
+      closeCombineModal();
+      renderMachineOverview();
+      renderCombinedGroups();
+      showOpsView("combined");
+    });
+    combinedRows.addEventListener("click", event => {
+      const button = event.target.closest("[data-unlink-group]");
+      if (!button) return;
+      pendingUnlinkGroup = combinedGroups.find(group => group.id === button.dataset.unlinkGroup) || null;
+      if (!pendingUnlinkGroup) return;
+      document.getElementById("unlinkSummary").innerHTML = `<strong>${pendingUnlinkGroup.id}</strong> · ${pendingUnlinkGroup.machineName} · ${pendingUnlinkGroup.line}<br>${pendingUnlinkGroup.drumIds.join(" · ")}<br><strong>${pendingUnlinkGroup.meters.toFixed(1)} m</strong>`;
+      unlinkModal.classList.add("open");
+      unlinkModal.setAttribute("aria-hidden", "false");
+    });
+    function closeUnlinkModal() {
+      unlinkModal.classList.remove("open");
+      unlinkModal.setAttribute("aria-hidden", "true");
+      pendingUnlinkGroup = null;
+    }
+    document.getElementById("cancelUnlink").addEventListener("click", closeUnlinkModal);
+    document.getElementById("cancelUnlinkTop").addEventListener("click", closeUnlinkModal);
+    unlinkModal.addEventListener("click", event => { if (event.target === unlinkModal) closeUnlinkModal(); });
+    document.getElementById("confirmUnlink").addEventListener("click", () => {
+      if (!pendingUnlinkGroup) return;
+      const group = pendingUnlinkGroup;
+      const machine = opsMachines[group.machineKey];
+      machine.drums.filter(drum => group.drumIds.includes(drum.id)).forEach(drum => { drum.groupId = null; });
+      group.status = "UNLINKED";
+      if (machine.lastGroup && machine.lastGroup.id === group.id) machine.lastGroup = null;
+      closeUnlinkModal();
+      renderCombinedGroups();
+      renderMachineOverview();
+      if (selectedMachine && selectedMachine.key === machine.key) renderDrums();
+    });
+    document.addEventListener("keydown", event => { if (event.key === "Escape" && combineModal.classList.contains("open")) closeCombineModal(); });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && modal.classList.contains("open")) closeMotorModal();
+      if (event.key === "Escape" && lineDetailsModal.classList.contains("open")) closeLineModal.click();
+    });
+  </script>
+</body>
+</html>
